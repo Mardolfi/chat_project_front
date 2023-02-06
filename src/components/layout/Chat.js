@@ -49,6 +49,7 @@ function Chat({
   const [chatImage, setChatImage] = useState();
   const [chatUsers, setChatUsers] = useState();
   const [emojis, setEmojis] = useState();
+  const [isOnline, setIsOnline] = useState();
   const [attachment, setAttachment] = useState();
   const messagesContainer = useRef();
 
@@ -58,7 +59,17 @@ function Chat({
         setChatUsers(res.data);
       });
     }
-  }, [activeChat]);
+  }, [activeChat, friends]);
+
+  useEffect(() => {
+    if (chatUsers?.length > 0) {
+      if (chatUsers.every((user) => user.is_online === true)) {
+        setIsOnline(true);
+      } else {
+        setIsOnline(false);
+      }
+    }
+  }, [chatUsers]);
 
   useEffect(() => {
     fetch(
@@ -138,7 +149,9 @@ function Chat({
                   ? chatImage.url
                   : "https://st3.depositphotos.com/4111759/13425/v/600/depositphotos_134255710-stock-illustration-avatar-vector-male-profile-gray.jpg"
               }
-            />
+            >
+              {isOnline && <Online />}
+            </ChatImage>
             <p>Title:</p>
             <span>{activeChat.title}</span>
             <p>About:</p>
@@ -313,7 +326,9 @@ function Chat({
                   chatImage?.url ||
                   "https://st3.depositphotos.com/4111759/13425/v/600/depositphotos_134255710-stock-illustration-avatar-vector-male-profile-gray.jpg"
                 }
-              />
+                >
+                {isOnline && <Online />}
+              </ChatImage>
               <h3>{activeChat.title}</h3>
             </ChatInfo>
             <Buttons>
@@ -368,7 +383,7 @@ function Chat({
 
                 setMessageInput("");
                 setActiveEmojiContainer(false);
-                setAttachment(false)
+                setAttachment(false);
               }}
             >
               <MessageInput>
@@ -387,13 +402,15 @@ function Chat({
                 <Dropzone
                   accept={{ "image/png": [".png"], "image/jpeg": [".jpeg"] }}
                   onDropAccepted={(file) => {
-                    setAttachment(file[file.length - 1])
+                    setAttachment(file[file.length - 1]);
                   }}
                 >
                   {({ getInputProps, getRootProps }) => (
                     <AttachmentContainer {...getRootProps()}>
                       {attachment ? (
-                        <AttachmentImage src={URL.createObjectURL(attachment)} />
+                        <AttachmentImage
+                          src={URL.createObjectURL(attachment)}
+                        />
                       ) : (
                         <MdAttachFile size={40} cursor={"pointer"} />
                       )}
@@ -419,6 +436,17 @@ function Chat({
   );
 }
 
+const Online = styled.div`
+  background: #23ce6b;
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  box-shadow: 0px 0px 10px -5px black;
+`;
+
 const AttachmentContainer = styled.div``;
 
 const AttachmentImage = styled.div`
@@ -435,7 +463,7 @@ const AttachmentImage = styled.div`
   :hover {
     opacity: 1;
   }
-`
+`;
 
 const BackEditChatImage = styled.div`
   background: ${(props) => (props.isDragAccept ? "green !important" : "#000")};
@@ -703,6 +731,7 @@ const ChatImage = styled.div`
   background-position: center;
   background-size: cover;
   border-radius: 50%;
+  position: relative;
 `;
 
 const EditChatImage = styled(ChatImage)`

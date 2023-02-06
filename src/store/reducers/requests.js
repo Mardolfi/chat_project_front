@@ -6,7 +6,6 @@ const INITIAL_STATE = {
 };
 
 function requests(state = INITIAL_STATE, actions) {
-  console.log(actions)
   switch (actions.type) {
     case "INITIALREQUEST_LOADING": {
       return {

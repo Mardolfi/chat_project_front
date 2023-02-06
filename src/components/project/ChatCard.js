@@ -2,6 +2,7 @@ import moment from "moment/moment";
 import { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
+import api from "../../services/api";
 import { activeChat } from "../../store/actions";
 
 function ChatCard({
@@ -10,23 +11,52 @@ function ChatCard({
   chats,
   setActiveChat,
   messages,
-  chatImages
+  chatImages,
+  friends,
 }) {
   const [time, setTime] = useState();
   const [isActiveChat, setIsActiveChat] = useState(false);
-  const [lastMessage, setLastMessage] = useState()
-  const [chat, setChat] = useState()
-  const [chatImage, setChatImage] = useState()
+  const [lastMessage, setLastMessage] = useState();
+  const [chat, setChat] = useState();
+  const [chatUsers, setChatUsers] = useState();
+  const [chatImage, setChatImage] = useState();
+  const [isOnline, setIsOnline] = useState();
 
   useEffect(() => {
-    const chatArray = chats.chats.find((chat) => chat.id == id)
-    const lastMessageObject = messages.filter((message) => message.chat_id == id)
+    if (chat) {
+      api.get(`/chats/${chat.id}/users`).then((res) => {
+        setChatUsers(res.data);
+      });
+    }
+  }, [chat, friends]);
+
+  useEffect(() => {
+    if (chatUsers?.length > 0) {
+      if (chatUsers.every((user) => user.is_online === true)) {
+        setIsOnline(true);
+      } else {
+        setIsOnline(false);
+      }
+    }
+  }, [chatUsers]);
+
+  useEffect(() => {
+    const chatArray = chats.chats.find((chat) => chat.id == id);
+    const lastMessageObject = messages.filter(
+      (message) => message.chat_id == id
+    );
     setLastMessage(lastMessageObject[lastMessageObject.length - 1]);
     setChat(chatArray);
     setIsActiveChat(chats.chats.some((chat) => chats?.activeChat?.id == id));
-    const date = moment(lastMessageObject.length > 0 ? lastMessageObject[lastMessageObject.length - 1].createdAt : chatArray.createdAt).locale("pt-br").fromNow();
+    const date = moment(
+      lastMessageObject.length > 0
+        ? lastMessageObject[lastMessageObject.length - 1].createdAt
+        : chatArray.createdAt
+    )
+      .locale("pt-br")
+      .fromNow();
     setTime(date);
-    setChatImage(chatImages.find((chatImage) => chatImage.chat_id == id))
+    setChatImage(chatImages.find((chatImage) => chatImage.chat_id == id));
   }, [chats, messages, chatImages]);
 
   return (
@@ -36,7 +66,14 @@ function ChatCard({
         setActiveChat(id);
       }}
     >
-      <ChatImage src={chatImage?.url || "https://st3.depositphotos.com/4111759/13425/v/600/depositphotos_134255710-stock-illustration-avatar-vector-male-profile-gray.jpg"} />
+      <ChatImage
+        src={
+          chatImage?.url ||
+          "https://st3.depositphotos.com/4111759/13425/v/600/depositphotos_134255710-stock-illustration-avatar-vector-male-profile-gray.jpg"
+        }
+      >
+        {isOnline && <Online />}
+      </ChatImage>
       <ChatNames activeChat={isActiveChat}>
         <div>
           <h4>{title}</h4>
@@ -47,6 +84,17 @@ function ChatCard({
     </CardContainer>
   );
 }
+
+const Online = styled.div`
+  background: #23ce6b;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  box-shadow: 0px 0px 10px -5px black;
+`;
 
 const ChatNames = styled.div`
   display: flex;
@@ -83,6 +131,7 @@ const ChatImage = styled.div`
   background-size: cover;
   background-position: center;
   border-radius: 50%;
+  position: relative;
 `;
 
 const CardContainer = styled.div`
@@ -104,7 +153,8 @@ const mapStateToProps = (state) => {
   return {
     chats: state.chat,
     messages: state.messages.messages,
-    chatImages: state.chatImages.chatImages
+    chatImages: state.chatImages.chatImages,
+    friends: state.user.users,
   };
 };
 
