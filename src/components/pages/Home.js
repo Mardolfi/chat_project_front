@@ -40,7 +40,7 @@ import api from "../../services/api";
 import { io } from "socket.io-client";
 import RequestCard from "../project/RequestCard";
 
-const socket = io("http://localhost:3333");
+const socket = io(process.env.REACT_APP_SOCKET_URL);
 
 function Home({
   chat,
